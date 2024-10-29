@@ -1,13 +1,27 @@
-import React, { useState, useRef } from 'react';
-import axios from 'axios';
+import React, { useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import CanvasDraw from 'react-canvas-draw';
+import axios from '../axiosConfig';  // Импортируйте настроенный axiosInstance
 
 function DrawingCanvas() {
   const { taskId } = useParams();
   const canvasRef = useRef(null);
   const [color, setColor] = useState('#000000');
-  const [brushRadius, setBrushRadius] = useState(4);
+  const [brushRadius, setBrushRadius] = useState(5);
+  const [isErasing, setIsErasing] = useState(false);
+
+  const handleColorChange = (e) => {
+    setColor(e.target.value);
+    setIsErasing(false);
+  };
+
+  const handleBrushRadiusChange = (e) => {
+    setBrushRadius(parseInt(e.target.value, 10));
+  };
+
+  const handleEraser = () => {
+    setIsErasing(true);
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -17,7 +31,7 @@ function DrawingCanvas() {
       formData.append('image', blob);
       formData.append('task', taskId);
 
-      axios.post('http://localhost:8000/api/drawings/', formData)
+      axios.post('/drawings/', formData)
         .then(response => {
           console.log('Drawing submitted:', response.data);
         })
@@ -27,46 +41,33 @@ function DrawingCanvas() {
     });
   };
 
-  const handleColorChange = (e) => {
-    setColor(e.target.value);
-  };
-
-  const handleEraser = () => {
-    setColor('#ffffff'); //Oshirgish
-  };
-
   return (
-    <div style={{ textAlign: 'center', backgroundColor: '#f0f0f0', padding: '20px' }}>
+    <div style={{ textAlign: 'center' }}>
       <h2>Draw something</h2>
-      <div style={{ display: 'inline-block' }}>
-        <CanvasDraw
-          ref={canvasRef}
-          brushColor={color}
-          brushRadius={brushRadius}
-          lazyRadius={0}
-          canvasWidth={600}
-          canvasHeight={550}
-          hideGrid={true} // Hide the grid
-        />
-      </div>
-      <div style={{ marginTop: '20px' }}>
-        <label>
-          Select color:
-          <input type="color" value={color} onChange={handleColorChange} />
-        </label>
-        <button onClick={handleEraser}>Eraser</button>
-        <label>
-          Brush size:
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+        <input type="color" value={color} onChange={handleColorChange} />
+        <label style={{ marginLeft: '10px' }}>
+          Brush Radius:
           <input
-            type="range"
-            min="1"
-            max="50"
+            type="number"
             value={brushRadius}
-            onChange={(e) => setBrushRadius(parseInt(e.target.value))}
+            onChange={handleBrushRadiusChange}
+            style={{ marginLeft: '5px', width: '50px' }}
           />
         </label>
-        <button onClick={handleSubmit}>Submit Drawing</button>
+        <button onClick={handleEraser} style={{ marginLeft: '10px' }}>Eraser</button>
       </div>
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <CanvasDraw
+          ref={canvasRef}
+          brushColor={isErasing ? '#FFFFFF' : color}
+          brushRadius={brushRadius}
+          canvasWidth={800}
+          canvasHeight={600}
+          hideGrid={true}
+        />
+      </div>
+      <button onClick={handleSubmit} style={{ marginTop: '20px' }}>Submit Drawing</button>
     </div>
   );
 }
